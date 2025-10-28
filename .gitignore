@@ -1,2 +1,8 @@
 # Ignore virtual environment
-env
+env/
+venv/
+.venv/
+ENV/
+
+# Ignoring rough work
+rough.ipynb
