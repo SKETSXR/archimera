@@ -7,6 +7,9 @@ ENV/
 # Ignoring rough work
 rough.ipynb
 
+# Ignoring some helper scripts
+pdf_to_image.py
+
 # Currently ignoring sketchformer materials
 sketch-transformer-tf2-cvpr_tform_cont/
 sketchformer_dataset/
