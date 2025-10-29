@@ -12,7 +12,6 @@ import numpy as np
 import cv2
 from skimage.morphology import skeletonize
 from glob import glob
-import argparse
 
 # -------------------- Image Preprocessing --------------------
 def preprocess_image(path, target_size=None):
