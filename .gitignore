@@ -16,21 +16,17 @@ sketchformer_dataset/
 sketchformer-master/
 sketchformer_master/
 transformer-inference/
-#id_mapping_sketchformer.json
-#pngs_to_continuous_strokes.py
-#search_query_sketchformer.py
-#sketchformer_embeddings.npy
-#sketchformer_index_mapping.json
-#sketchformer_index.faiss
-#store_sketchformer_embeddings_faiss.py
 token.secret
-#extract_sketchformer_embeddings.py
+
 
 # Ignoring sketches files
 input_pdf/
 input_png/
+query_pdf/
+query_png/
+preprocessed/
+preprocessed_query_png/
 
 # Ignoring metafiles
 *.pyc
 *.cpython
-*.ipynb
