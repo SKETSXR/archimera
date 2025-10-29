@@ -2,8 +2,9 @@
 # pngs_to_continuous_strokes.py
 """
 Convert PNG sketch images into continuous stroke sequences expected by SketchFormer.
-Each stroke vector has 5 values: [dx, dy, pen_down, pen_up, pen_end/pad]
-We pad sequences up to max_seq_len with [0,0,0,0,1] (pad token used in the repo).
+Each stroke vector has 5 values: [dx, dy, pen_down, pen_up, pen_end/pad].
+Sequences longer than `max_seq_len` are adaptively reduced using average pooling
+(for continuous deltas) and voting-based aggregation (for binary pen states).
 """
 
 import os
@@ -13,21 +14,29 @@ from skimage.morphology import skeletonize
 from glob import glob
 import argparse
 
+# -------------------- Image Preprocessing --------------------
 def preprocess_image(path, target_size=None):
+    """
+    Reads an image, binarizes, inverts (so stroke pixels=1), and skeletonizes.
+    """
     img = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
     if img is None:
         raise RuntimeError(f"Could not read {path}")
     if target_size:
         img = cv2.resize(img, target_size, interpolation=cv2.INTER_AREA)
+    # Adaptive threshold using Otsu
     _, th = cv2.threshold(img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-    # invert so stroke pixels = 1
-    if np.mean(th) > 127:
+    if np.mean(th) > 127:  # ensure black strokes on white bg
         th = 255 - th
     sk = skeletonize((th > 0))
-    sk = (sk.astype(np.uint8) * 255)
-    return sk
+    return (sk.astype(np.uint8) * 255)
 
+
+# -------------------- Contour Extraction --------------------
 def image_to_polylines(img, min_length=5, approx_epsilon=2.0):
+    """
+    Extracts skeleton contours and approximates them as polylines.
+    """
     contours, _ = cv2.findContours(img.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
     polylines = []
     for cnt in contours:
@@ -43,78 +52,125 @@ def image_to_polylines(img, min_length=5, approx_epsilon=2.0):
         polylines.append(approx.astype(np.float32))
     return polylines
 
-def polylines_to_continuous_seq(polylines, max_seq_len=200):
+
+# -------------------- Polyline → Sequence --------------------
+def polylines_to_continuous_seq(polylines):
     """
-    Convert list of polylines -> sequence of [dx, dy, p_down, p_up, p_end]
-    - interior points: p_down = 1 -> [1,0,0]
-    - stroke break: p_up = 1 -> [0,1,0] (zero delta)
-    - final padding: [0,0,0,0,1]
+    Convert polylines to [dx, dy, pen_down, pen_up, pen_end] sequence.
     """
     seq = []
     for i, poly in enumerate(polylines):
         if poly.shape[0] < 2:
             continue
-        # convert poly points to sequence of deltas
         deltas = np.diff(poly, axis=0)  # shape (n-1,2)
-        for j in range(deltas.shape[0]):
-            dx, dy = deltas[j]
-            # pen_down for movement
-            seq.append([float(dx), float(dy), 1.0, 0.0, 0.0])
-        # between strokes -> pen_up marker (zero delta)
+        for dx, dy in deltas:
+            seq.append([float(dx), float(dy), 1.0, 0.0, 0.0])  # pen_down
+        # mark stroke end
         if i < len(polylines) - 1:
-            seq.append([0.0, 0.0, 0.0, 1.0, 0.0])
-
+            seq.append([0.0, 0.0, 0.0, 1.0, 0.0])  # pen_up
     if not seq:
-        # fallback: single zero move + pen_end
-        seq = [[0.0, 0.0, 0.0, 0.0, 1.0]]
-
-    # truncate if too long
-    if len(seq) > max_seq_len:
-        print(len(seq))
-        seq = seq[:max_seq_len]
-    # pad to max_seq_len with [0,0,0,0,1]
-    pad_token = [0.0, 0.0, 0.0, 0.0, 1.0]
-    while len(seq) < max_seq_len:
-        seq.append(pad_token)
+        seq = [[0.0, 0.0, 0.0, 0.0, 1.0]]  # fallback single token
     return np.array(seq, dtype=np.float32)
 
-def img_path_to_seq(path, target_size=None, max_seq_len=200):
-    sk = preprocess_image(path, target_size=target_size)
-    polylines = image_to_polylines(sk, min_length=8, approx_epsilon=2.0)
-    seq = polylines_to_continuous_seq(polylines, max_seq_len=max_seq_len)
+
+# -------------------- Sequence Pooling --------------------
+def pooled_pen_state(chunk, idx):
+    """
+    Decide binary pen state (pen_down/up/end) for a pooled segment.
+    Uses hybrid logic: majority vote with fallback if any '1' present.
+    """
+    avg = np.mean(chunk[:, idx])
+    if avg > 0.5:
+        return 1.0
+    elif np.any(chunk[:, idx] > 0.5):
+        return 1.0
+    return 0.0
+
+
+def average_pool_sequence(seq, target_len):
+    """
+    Average pool a (N,5) sequence to target_len for SketchFormer compatibility.
+    - dx, dy averaged normally
+    - pen_* flags aggregated via hybrid voting
+    """
+    n = len(seq)
+    if n <= target_len:
+        return seq  # no pooling needed
+
+    step = n / target_len
+    pooled = []
+    for i in range(target_len):
+        start = int(i * step)
+        end = int((i + 1) * step)
+        chunk = seq[start:end]
+        if len(chunk) == 0:
+            continue
+        dx, dy = np.mean(chunk[:, 0]), np.mean(chunk[:, 1])
+        pen_down = pooled_pen_state(chunk, 2)
+        pen_up = pooled_pen_state(chunk, 3)
+        pen_end = pooled_pen_state(chunk, 4)
+        pooled.append([dx, dy, pen_down, pen_up, pen_end])
+
+    return np.array(pooled, dtype=np.float32)
+
+
+# -------------------- Sequence Padding --------------------
+def pad_sequence(seq, max_seq_len):
+    """
+    Pad sequence to fixed length using [0,0,0,0,1].
+    """
+    pad_token = [0.0, 0.0, 0.0, 0.0, 1.0]
+    if len(seq) > max_seq_len:
+        seq = seq[:max_seq_len]
+    elif len(seq) < max_seq_len:
+        pad = np.tile(pad_token, (max_seq_len - len(seq), 1))
+        seq = np.vstack([seq, pad])
     return seq
 
+
+# -------------------- Conversion Pipeline --------------------
+def img_path_to_seq(path, target_size=None, max_seq_len=200):
+    """
+    Complete conversion from PNG → skeleton → polylines → sequence (pooled + padded).
+    """
+    sk = preprocess_image(path, target_size=target_size)
+    polylines = image_to_polylines(sk, min_length=8, approx_epsilon=2.0)
+    seq = polylines_to_continuous_seq(polylines)
+
+    # adaptive pooling if too long
+    if len(seq) > max_seq_len:
+        seq = average_pool_sequence(seq, max_seq_len)
+
+    seq = pad_sequence(seq, max_seq_len)
+    return seq
+
+
+# -------------------- Main Routine --------------------
 def main(png_folder, out_npz, target_size=None, max_seq_len=200):
     paths = sorted(glob(os.path.join(png_folder, '*.png')))
-    X = []
-    filenames = []
+    X, filenames = [], []
+
     for p in paths:
         try:
             seq = img_path_to_seq(p, target_size=target_size, max_seq_len=max_seq_len)
-            X.append(seq)  # each seq shape (max_seq_len, 5)
+            X.append(seq)
             filenames.append(os.path.basename(p))
-            print("Converted:", os.path.basename(p), "len:", np.sum(seq[..., -1] != 1))
+            print(f"✅ Converted {os.path.basename(p)} | Length: {np.sum(seq[..., -1] != 1)}")
         except Exception as e:
-            print("Failed:", p, e)
+            print(f"❌ Failed {p}: {e}")
+
     if not X:
         raise RuntimeError("No sequences produced.")
-    X = np.stack(X, axis=0)  # shape (N, max_seq_len, 5)
+
+    X = np.stack(X, axis=0)  # (N, max_seq_len, 5)
     np.savez(out_npz, x=X, filenames=np.array(filenames))
-    print("Saved dataset:", out_npz, "shape:", X.shape)
+    print(f"\n💾 Saved dataset: {out_npz}")
+    print(f"   Shape: {X.shape}")
 
+
+# -------------------- Driver Code --------------------
 if __name__ == "__main__":
-    p = argparse.ArgumentParser()
-    p.add_argument("--png-folder", required=True)
-    p.add_argument("--out-npz", required=True)
-    p.add_argument("--max-seq-len", type=int, default=200)
-    p.add_argument("--target-size", type=int, nargs=2, default=None)
-    args = p.parse_args()
-    main(args.png_folder, args.out_npz, target_size=tuple(args.target_size) if args.target_size else None,
-         max_seq_len=args.max_seq_len)
+    png_folder = "/home/ayushkum/archimera/inputs/input_png"
+    out_npz = "/home/ayushkum/archimera/sketchformer/sketchformer_dataset/chunk_0.npz"
+    main(png_folder=png_folder, out_npz=out_npz)
 
-"""
-Execution code
-pip install scikit-image opencv-python-headless
-python pngs_to_continuous_strokes.py --png-folder ./input_png --out-npz ./sketchformer_dataset/chunk_0.npz --max-seq-len 200
-
-"""
