@@ -79,10 +79,10 @@ def pooled_pen_state(chunk, idx):
     Uses hybrid logic: majority vote with fallback if any '1' present.
     """
     avg = np.mean(chunk[:, idx])
-    if avg > 0.5:
+    if avg >= 0.5:
         return 1.0
-    elif np.any(chunk[:, idx] > 0.5):
-        return 1.0
+    # elif np.any(chunk[:, idx] > 0.5):
+    #     return 1.0
     return 0.0
 
 
