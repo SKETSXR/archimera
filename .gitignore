@@ -11,6 +11,7 @@ rough.ipynb
 sketch-transformer-tf2-cvpr_tform_cont/
 sketchformer_dataset/
 sketchformer-master/
+sketchformer_master/
 transformer-inference/
 id_mapping_sketchformer.json
 pngs_to_continuous_strokes.py
@@ -25,3 +26,8 @@ extract_sketchformer_embeddings.py
 # Ignoring sketches files
 input_pdf/
 input_png/
+
+# Ignoring metafiles
+*.pyc
+*.cpython
+*.ipynb
