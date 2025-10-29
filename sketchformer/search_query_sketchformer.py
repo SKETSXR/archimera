@@ -53,7 +53,7 @@ if __name__ == "__main__":
     # print("Loaded lowerdim:", model.hps['lowerdim'])
     
     for i in range(1, 9):
-        query_path = f"input_png/pdf{i}.png"
+        query_path = f"/home/ayushkum/archimera/inputs/input_png/pdf{i}.png"
         # Converting png to continuous stroke form
         seq = img_path_to_seq(path=query_path, target_size=None, max_seq_len=200)
         # print(f"Sequence Shape before reshaping: {seq.shape}")
