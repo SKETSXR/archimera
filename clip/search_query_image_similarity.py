@@ -84,21 +84,20 @@ def search_similar_sketches(
 
 # ** DRIVER CODE
 if __name__ == '__main__':
-    for i in range(1, 9):
-        query_path = f"./input_png/pdf{i}.png"
-        index_path = "./sketch_index.faiss"
-        mapping_path = "./id_mapping.json"
-        top_k = 5
-        distance_metric = "cosine"
+    query_path = "/home/ayushkum/archimera/query_png/pdf3_SIM.png"
+    index_path = "/home/ayushkum/archimera/clip/sketch_index.faiss"
+    mapping_path = "/home/ayushkum/archimera/clip/id_mapping.json"
+    top_k = 5
+    distance_metric = "cosine"
 
-        results = search_similar_sketches(
-            query_path=query_path,
-            index_path=index_path,
-            mapping_path=mapping_path,
-            top_k=top_k,
-            distance_metric=distance_metric
-        )
+    results = search_similar_sketches(
+        query_path=query_path,
+        index_path=index_path,
+        mapping_path=mapping_path,
+        top_k=top_k,
+        distance_metric=distance_metric
+    )
 
-        print(f"\n Top similar sketches for pdf{i}: ")
-        for r in results:
-            print(f"{r['rank']}. {r['filename']} - score: {round(r['score'] * 100, 2)}%")
+    print(f"\n Top similar sketches for pdf3_SIM: ")
+    for r in results:
+        print(f"{r['rank']}. {r['filename']} - score: {round(r['score'] * 100, 2)}%")
