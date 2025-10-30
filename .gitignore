@@ -18,6 +18,9 @@ sketchformer_master/
 transformer-inference/
 token.secret
 
+# Ignoring pretrained weights
+*.bin
+*Zone.Identifier
 
 # Ignoring sketches files
 input_pdf/
