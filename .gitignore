@@ -23,12 +23,13 @@ token.secret
 *Zone.Identifier
 
 # Ignoring sketches files
-input_pdf/
-input_png/
+inputs/
+# input_png/
 query_pdf/
 query_png/
 preprocessed/
 preprocessed_query_png/
+augmented/
 
 # Ignoring metafiles
 *.pyc
