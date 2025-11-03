@@ -1,5 +1,5 @@
 # Archimera
 
-This is just a sample README file, and will be updated further.
+The detailed documentation of the project can be found at [report.ipynb](./report.ipynb).
 
 For any details, contact Ayush at ayushkum@griphic.com
