@@ -30,6 +30,7 @@ query_png/
 preprocessed/
 preprocessed_query_png/
 augmented/
+latest_details/
 
 # Ignoring metafiles
 *.pyc
