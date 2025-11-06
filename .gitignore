@@ -9,6 +9,10 @@ rough.ipynb
 
 # Ignoring some helper scripts
 pdf_to_image.py
+file_conversion.ipynb
+
+id_mapping.json
+sketch_index.faiss
 
 # Currently ignoring sketchformer materials
 sketch-transformer-tf2-cvpr_tform_cont/
@@ -24,13 +28,13 @@ token.secret
 
 # Ignoring sketches files
 inputs/
-# input_png/
 query_pdf/
 query_png/
 preprocessed/
 preprocessed_query_png/
 augmented/
 latest_details/
+clip/temp_image.png
 
 # Ignoring metafiles
 *.pyc
