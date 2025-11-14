@@ -1,0 +1,582 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>CADacomb by Archimera - Wardrobe & Furniture CAD Manager</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root{
+      --bg-dark-1:#071026; --bg-dark-2:#071420; --panel:#071822;
+      --muted:#9fb6d9; --text:#e6eef8; --accent:#7c3aed; --indigo:#6366f1;
+      --input-bg:rgba(255,255,255,0.02); --select-border:rgba(255,255,255,0.04);
+      --header-height:56px; --footer-height:36px;
+    }
+
+    html,body{height:100vh;margin:0;box-sizing:border-box;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;background:linear-gradient(135deg,var(--bg-dark-1)10%,var(--bg-dark-2)90%);color:var(--text);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+    *,*:before,*:after{box-sizing:inherit}
+    header{height:var(--header-height);display:flex;justify-content:space-between;align-items:center;padding:10px 20px;background:rgba(6,10,20,0.7);border-bottom:1px solid rgba(255,255,255,0.03);position:sticky;top:0;z-index:60}
+    .logo{width:46px;height:46px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:linear-gradient(90deg,#7c3aed,#06b6d4);font-weight:800;color:#fff;font-size:16px}
+    .brand-title{font-weight:700;font-size:18px}c
+    .brand-sub{color:#93c5fd;font-weight:700;margin-left:8px}
+    .muted-sm{color:rgba(255,255,255,0.62);font-size:13px}
+    .req{color:#ff6b6b;margin-left:6px;font-size:12px}
+
+    .app-wrap{
+      width:calc(100% - 60px);
+      max-width:1600px;
+      margin:14px auto;
+      display:grid;
+      grid-template-columns: 320px 1fr;
+      gap:20px;
+      padding: 0 8px;
+      align-items:start;
+      min-height: calc(100vh - var(--header-height) - var(--footer-height) - 28px);
+    }
+
+    aside{background:linear-gradient(180deg,rgba(255,255,255,0.01),rgba(255,255,255,0.006));border-radius:12px;padding:14px;border:1px solid rgba(255,255,255,0.02);max-height:100%; overflow:auto; box-shadow: inset 0 0 40px rgba(0,0,0,0.35);}
+    .main{max-height:100%; overflow:auto}
+    .card{background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border-radius:12px;padding:16px;border:1px solid rgba(255,255,255,0.03);box-shadow:0 10px 30px rgba(2,6,23,0.6)}
+    .section-title{font-size:17px;font-weight:600;margin-bottom:10px;color:var(--text)}
+
+    .form-grid{display:grid;grid-template-columns:1fr 520px;gap:22px;align-items:start}
+    @media (max-width:1200px){ .app-wrap{grid-template-columns:300px 1fr} .form-grid{grid-template-columns:1fr 420px} }
+    @media (max-width:992px){ .app-wrap{grid-template-columns:1fr} .form-grid{grid-template-columns:1fr} aside{order:2} .main{order:1} }
+
+    label{display:block;font-size:13px;margin-bottom:8px;color:rgba(255,255,255,0.92)}
+    input[type="text"],select,input[type="date"]{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--select-border);background:var(--input-bg);color:var(--text);outline:none;font-size:14px;appearance:none}
+    select{background-image:linear-gradient(45deg,transparent 50%,var(--text)50%),linear-gradient(135deg,var(--text)50%,transparent 50%);background-position:calc(100% - 18px) calc(1em + 2px),calc(100% - 12px) calc(1em + 2px);background-size:6px 6px,6px 6px;background-repeat:no-repeat;padding-right:40px}
+    select,option{color:var(--text);background-color:var(--panel)} option{padding:8px 10px}
+
+    .tag-cta{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:linear-gradient(90deg,#7c3aed,#06b6d4);color:#fff;font-weight:700;margin:6px 6px 6px 0;cursor:pointer;font-size:13px;transition:transform .12s ease,box-shadow .12s ease}
+    .tag-cta:hover{transform:translateY(-6px) scale(1.04);box-shadow:0 12px 30px rgba(124,58,237,0.18)}
+    .tag-chip{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;color:#fff;background:linear-gradient(90deg,#7c3aed,#06b6d4);margin-right:8px;margin-bottom:8px;font-weight:700;transition:transform .12s ease,box-shadow .12s ease}
+    .tag-chip:hover{transform:translateY(-4px) scale(1.03);box-shadow:0 10px 28px rgba(124,58,237,0.16)}
+    .tags-area{min-height:56px;margin-bottom:10px;display:flex;flex-wrap:wrap;align-items:center}
+
+    .tag-row{display:flex;gap:10px;align-items:center}
+    #tagInput{flex:1;min-width:0;padding:10px 12px;border-radius:10px;border:1px solid var(--select-border);background:var(--input-bg);color:var(--text);font-size:14px}
+
+    .drop-row{display:flex;gap:16px;align-items:stretch}
+    .drop-mini{flex:1;min-width:0;display:flex;flex-direction:column}
+    .dropzone{border:1px dashed rgba(255,255,255,0.04);border-radius:10px;padding:12px;text-align:center;transition:box-shadow .12s ease,transform .12s ease;background:rgba(255,255,255,0.006);display:flex;flex-direction:column;align-items:center;justify-content:center;height:150px}
+    .dropzone .muted-sm{margin-top:6px}
+    .dropzone .btn{margin:0}
+    @media (max-width:900px){ .drop-row{flex-direction:column} .dropzone{height:120px} }
+
+    .file-preview{margin-top:8px;font-size:13px;color:rgba(255,255,255,0.8)}
+    .btn{padding:10px 12px;border-radius:10px;border:none;cursor:pointer;font-weight:700;color:#fff;font-size:14px}
+    .btn-primary{background:linear-gradient(90deg,#6366f1,#06b6d4);box-shadow:0 10px 30px rgba(6,182,212,0.06)}
+    .btn-upload{background:linear-gradient(90deg,#16a34a,#059669);box-shadow:0 10px 30px rgba(5,150,105,0.06)}
+
+    .suggestions{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.03);margin-top:8px;border-radius:10px;padding:12px;max-height:260px;overflow:auto;box-shadow:0 10px 30px rgba(2,6,23,0.5)}
+    .collapse-toggle{background:transparent;border:1px solid rgba(255,255,255,0.03);padding:8px 10px;border-radius:10px;color:var(--text);cursor:pointer;margin-top:12px}
+    .muted-instruction{color:rgba(255,255,255,0.6);font-size:13px;margin-top:10px}
+
+    table{width:100%;border-collapse:collapse;font-size:14px}
+    th,td{padding:12px;text-align:left;vertical-align:top}
+    thead{background:rgba(255,255,255,0.02);font-weight:700;color:var(--text);position:sticky;top:0;z-index:10}
+    .action-btn{padding:8px 10px;background:rgba(255,255,255,0.02);color:var(--text);border-radius:8px;border:1px solid rgba(255,255,255,0.03);cursor:pointer}
+
+    .toast{position:fixed;right:22px;bottom:22px;background:rgba(6,8,16,0.85);color:#fff;padding:10px 14px;border-radius:10px;box-shadow:0 12px 40px rgba(2,6,23,0.7);z-index:9999}
+    footer{height:var(--footer-height);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;padding:8px}
+
+    /* Cursor follower */
+    .cursor-dot, .cursor-ring { position: fixed; pointer-events: none; left: 0; top: 0; transform: translate3d(-50%,-50%,0); z-index: 99999; mix-blend-mode: difference; transition: transform .12s ease-out; }
+    .cursor-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.95); box-shadow: 0 2px 10px rgba(99,102,241,0.18); }
+    .cursor-ring { width: 36px; height: 36px; border-radius: 50%; border: 2px solid rgba(99,102,241,0.18); opacity: 0.95; background: transparent; transition: transform .18s cubic-bezier(.2,.8,.2,1), opacity .18s; }
+    @media (hover:none) { .cursor-dot, .cursor-ring { display:none; } }
+    .interactive-hover { cursor: pointer; }
+  </style>
+</head>
+<body>
+  <header>
+    <div style="display:flex;gap:12px;align-items:center">
+      <div class="logo">CA</div>
+      <div>
+        <div class="brand-title">CADacomb <span class="brand-sub">by Archimera</span></div>
+        <div class="muted-sm">Desktop workspace — file uploads & search for Furniture <strong>CAD</strong> files</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:12px;align-items:center">
+      <div id="clock" class="muted-sm" aria-live="polite"></div>
+      <button id="refreshBtn" class="btn btn-primary interactive-hover">Refresh</button>
+    </div>
+  </header>
+
+  <div class="app-wrap" role="main" aria-label="CADacomb application">
+    <aside aria-label="Navigation">
+      <div style="display:flex;flex-direction:column;height:100%;">
+        <button id="tabAdd" class="tab-vertical tab-vertical-active interactive-hover" aria-pressed="true" style="padding:10px 12px;font-size:14px">➕ Add Files</button>
+        <button id="tabView" class="tab-vertical interactive-hover" aria-pressed="false" style="margin-top:10px;padding:10px 12px;font-size:14px">📁 View Files</button>
+        <div style="margin-top:auto" class="muted-sm">Choose furniture type, add tags, upload client sketch (PDF), final CAD (DWG/DXF) and required CAD PDF.</div>
+      </div>
+    </aside>
+
+    <section class="main">
+      <div id="panelAdd" class="card" style="display:block;">
+        <div class="section-title">Upload Files</div>
+
+        <div class="form-grid">
+          <!-- LEFT: meta -->
+          <div>
+            <div>
+              <label>Project Name <span class="req">*</span></label>
+              <input id="project" type="text" placeholder="Project name (e.g., Marriott Gurugram)" aria-required="true"/>
+            </div>
+
+            <div style="margin-top:12px">
+              <label>Client Name <span class="req">*</span></label>
+              <div style="display:flex;gap:8px;align-items:center">
+                <select id="client" aria-required="true" class="interactive-hover">
+                  <option value="">Select client</option>
+                  <option value="Meyer Davis">Meyer Davis</option>
+                  <option value="David Collins">David Collins</option>
+                </select>
+                <button id="addClientBtn" class="btn btn-primary interactive-hover" title="Add new client">Add client</button>
+              </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
+              <div>
+                <label>Furniture type <span class="req">*</span></label>
+                <!-- ONLY Wardrobe enabled -->
+                <select id="furnitureType" class="interactive-hover">
+                  <option value="Wardrobe">Wardrobe</option>
+                </select>
+              </div>
+              <div>
+                <label>Location <span class="req">*</span></label>
+                <input id="location" type="text" placeholder="e.g., Gurugram site" />
+              </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
+              <div>
+                <label>Uploaded By <span class="req">*</span></label>
+                <input id="uploadedBy" type="text" placeholder="Your name" />
+              </div>
+              <div aria-hidden="true" style="visibility:hidden"></div>
+            </div>
+
+            <div style="margin-top:12px">
+              <div class="muted-instruction"><strong>Note:</strong> upload the latest client sketch (PDF), final CAD (.dwg/.dxf) and the required CAD PDF export.</div>
+            </div>
+          </div>
+
+          <!-- RIGHT: tags + uploads -->
+          <div>
+            <label>Tags (describe the furniture) <span class="req">*</span></label>
+            <div id="tagChips" class="tags-area" aria-live="polite"></div>
+
+            <div class="tag-row" style="margin-top:8px;">
+              <input id="tagInput" placeholder="Type tag and press Enter or click Add" aria-label="Tag input" />
+              <button id="addTagBtn" class="btn btn-primary interactive-hover">Add</button>
+            </div>
+
+            <div style="margin-top:12px">
+              <div style="font-size:13px;font-weight:700;margin-bottom:8px">Suggested tags</div>
+              <div id="defaultTags" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+            </div>
+
+            <button id="toggleAllTags" class="collapse-toggle interactive-hover" aria-expanded="false" style="margin-top:12px">View more tags</button>
+            <div id="allTags" class="suggestions" style="display:none;margin-top:12px"></div>
+
+            <!-- HORIZONTAL upload row -->
+            <div class="drop-row" style="margin-top:16px">
+              <div class="drop-mini">
+                <label>Client final sketch (PDF) <span class="req">*</span></label>
+                <div id="sketchDrop" class="dropzone" role="button">
+                  <div class="muted-sm">Accepted: .pdf</div>
+                  <div style="margin-top:10px"><button id="sketchSelect" class="btn btn-primary interactive-hover">Select PDF</button></div>
+                  <div id="sketchInfo" class="file-preview">No PDF selected</div>
+                </div>
+              </div>
+
+              <div class="drop-mini">
+                <label>Final CAD file (DWG / DXF) <span class="req">*</span></label>
+                <div id="cadDrop" class="dropzone" role="button">
+                  <div class="muted-sm">Accepted: .dwg, .dxf</div>
+                  <div style="margin-top:10px"><button id="cadSelect" class="btn btn-primary interactive-hover">Select CAD</button></div>
+                  <div id="cadInfo" class="file-preview">No CAD selected</div>
+                </div>
+              </div>
+
+              <div class="drop-mini">
+                <label>Final CAD (PDF export) <span class="req">*</span></label>
+                <div id="cadPdfDrop" class="dropzone" role="button">
+                  <div class="muted-sm">Accepted: .pdf</div>
+                  <div style="margin-top:10px"><button id="cadPdfSelect" class="btn btn-primary interactive-hover">Select CAD PDF</button></div>
+                  <div id="cadPdfInfo" class="file-preview">No PDF selected</div>
+                </div>
+              </div>
+            </div>
+
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px">
+              <div id="status" class="muted-sm">Ready</div>
+              <div><button id="uploadBtn" class="btn btn-upload interactive-hover">Upload</button></div>
+            </div>
+
+            <div id="progressWrap" style="display:none;margin-top:12px"><i id="progressBar" style="display:block;height:10px;width:0;background:linear-gradient(90deg,#6366f1,#06b6d4);border-radius:999px;"></i></div>
+            <div id="errorBox" style="margin-top:12px"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="panelView" class="card" style="display:none;margin-top:16px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div class="section-title">View Files</div>
+            <div class="muted-sm">Search, filter and copy server paths</div>
+          </div>
+
+          <div style="display:flex;gap:10px;align-items:center">
+            <input id="query" placeholder="Search filename or tag" style="padding:10px 12px" />
+            <input id="filterTag" placeholder="Filter by tag" style="padding:10px 12px" />
+            <select id="filterFurniture">
+              <option value="">All furniture</option><option>Wardrobe</option>
+            </select>
+            <select id="filterClient"><option value="">All clients</option></select>
+            <button id="searchBtn" class="btn btn-primary interactive-hover">Search</button>
+            <button id="clearBtn" class="btn interactive-hover" style="background:transparent;border:1px solid rgba(255,255,255,0.04)">Clear</button>
+          </div>
+        </div>
+
+        <!-- Table: single row per project, columns: Project | Furniture type | Client | Tags | Sketch PDF | CAD (.dwg/.dxf) | CAD PDF -->
+        <div id="fileList" style="margin-top:16px;max-height:56vh;overflow:auto"></div>
+      </div>
+    </section>
+  </div>
+
+  <div id="toastWrap" aria-live="polite"></div>
+  <footer>CADacomb — Archimera</footer>
+
+  <!-- cursor follower elements -->
+  <div class="cursor-ring" id="cursorRing"></div>
+  <div class="cursor-dot" id="cursorDot"></div>
+
+  <script>
+    /******** TAG LIB ********/
+    const TAG_LIBRARY = {
+      "Materials":["Solid Wood","Engineered Wood","Veneer","Laminate","Metal Frame","Glass Elements","Acrylic","Plastic/PVC","Natural Finish"],
+      "Doors & Panels":["Sliding","Hinged","Bi-fold","Pocket Door","Mirror Door","Louvered"],
+      "Interior / Storage":["Walk-in","Built-in","Modular","Shelves","Drawers","Hanging Rail","Shoe Storage","Accessory Drawer","Vertical Divider"],
+      "Hardware / Mechanism":["Soft-close","Push-to-open","Concealed Hinges","Hydraulic Lift","Integrated Lighting","Locking"],
+      "Finish / Aesthetics":["Matte Finish","High Gloss","Textured Finish","Two-Tone","Hand-Painted","Distressed/Vintage"],
+      "Use-case":["Wardrobe","Linen Closet","Wardrobe + Desk","Kids","Walk-through"],
+      "Environment / Performance":["Moisture Resistant","Fire-Rated","Eco-friendly","Acoustic Lining"],
+      "Size / Configuration":["Corner Unit","Floor-to-Ceiling","Half-height","Custom Width"],
+      "Accessories / Extras":["Pull-out Mirror","Lazy Susan","Tie / Belt Rack","Pull-out Ironing Board","Valet Rod"],
+      "Style":["Contemporary","Minimal","Scandinavian","Industrial","Traditional","Transitional"]
+    };
+    const DEFAULT_TAGS = ["Sliding","Built-in","Solid Wood","Soft-close","Mirror Door","Walk-in"];
+
+    /* DOM & State */
+    document.addEventListener('DOMContentLoaded',()=>{ initTagUI(); updateClock(); setInterval(updateClock,1000); loadFiles(); });
+    const API_BASE='http://localhost:4000/api';
+    const tabAdd=document.getElementById('tabAdd'), tabView=document.getElementById('tabView');
+    const panelAdd=document.getElementById('panelAdd'), panelView=document.getElementById('panelView');
+    const projectEl=document.getElementById('project'), clientEl=document.getElementById('client'), furnitureEl=document.getElementById('furnitureType'), locationEl=document.getElementById('location'), uploadedByEl=document.getElementById('uploadedBy');
+    const tagInput=document.getElementById('tagInput'), addTagBtn=document.getElementById('addTagBtn'), tagChips=document.getElementById('tagChips'), defaultTagsWrap=document.getElementById('defaultTags'), toggleAllTags=document.getElementById('toggleAllTags'), allTags=document.getElementById('allTags');
+    const sketchSelect=document.getElementById('sketchSelect'), sketchInfo=document.getElementById('sketchInfo');
+    const cadSelect=document.getElementById('cadSelect'), cadInfo=document.getElementById('cadInfo');
+    const cadPdfSelect=document.getElementById('cadPdfSelect'), cadPdfInfo=document.getElementById('cadPdfInfo');
+    const uploadBtn=document.getElementById('uploadBtn'), statusEl=document.getElementById('status'), progressWrap=document.getElementById('progressWrap'), progressBar=document.getElementById('progressBar'), errorBox=document.getElementById('errorBox');
+    const queryInput=document.getElementById('query'), filterTag=document.getElementById('filterTag'), filterFurniture=document.getElementById('filterFurniture'), filterClient=document.getElementById('filterClient'), searchBtn=document.getElementById('searchBtn'), clearBtn=document.getElementById('clearBtn'), fileList=document.getElementById('fileList'), toastWrap=document.getElementById('toastWrap');
+    const addClientBtn=document.getElementById('addClientBtn');
+    let tags=[], selectedSketch=null, selectedCad=null, selectedCadPdf=null;
+
+    /* Tabs */
+    function activateTab(name){
+      if(name==='add'){ panelAdd.style.display='block'; panelView.style.display='none'; tabAdd.classList.add('tab-vertical-active'); tabView.classList.remove('tab-vertical-active'); tabAdd.setAttribute('aria-pressed','true'); tabView.setAttribute('aria-pressed','false'); }
+      else { panelAdd.style.display='none'; panelView.style.display='block'; tabView.classList.add('tab-vertical-active'); tabAdd.classList.remove('tab-vertical-active'); tabAdd.setAttribute('aria-pressed','false'); tabView.setAttribute('aria-pressed','true'); }
+    }
+    tabAdd.addEventListener('click',()=>activateTab('add')); tabView.addEventListener('click',()=>activateTab('view')); activateTab('add');
+
+    /* Clock & Toast */
+    function updateClock(){ document.getElementById('clock').textContent=new Date().toLocaleString(); }
+    function showToast(msg,timeout=1300){ const t=document.createElement('div'); t.className='toast'; t.textContent=msg; toastWrap.appendChild(t); setTimeout(()=>{ t.style.opacity='0'; setTimeout(()=>t.remove(),220); }, timeout); }
+
+    /* Tag UI */
+    function initTagUI(){
+      defaultTagsWrap.innerHTML=''; DEFAULT_TAGS.forEach(t=>{ const btn=document.createElement('button'); btn.className='tag-cta interactive-hover'; btn.type='button'; btn.textContent=t; btn.addEventListener('click',()=>addTag(t)); defaultTagsWrap.appendChild(btn); });
+
+      allTags.innerHTML=''; const cats=Object.keys(TAG_LIBRARY||{}); if(cats.length===0) allTags.innerHTML='<div class="muted-sm">No tags available</div>'; else cats.forEach(cat=>{ const sect=document.createElement('div'); sect.style.marginBottom='10px'; sect.innerHTML=`<div style="font-size:13px;font-weight:700;margin-bottom:8px">${cat}</div>`; const wrap=document.createElement('div'); (TAG_LIBRARY[cat]||[]).forEach(t=>{ const b=document.createElement('button'); b.className='tag-cta interactive-hover'; b.type='button'; b.textContent=t; b.title=`${t} — ${cat}`; b.addEventListener('click',()=>addTag(t)); wrap.appendChild(b); }); sect.appendChild(wrap); allTags.appendChild(sect); });
+
+      toggleAllTags.addEventListener('click',()=>{ const isHidden=allTags.style.display==='none'||!allTags.style.display; allTags.style.display=isHidden?'block':'none'; toggleAllTags.textContent=isHidden?'Hide tags':'View more tags'; toggleAllTags.setAttribute('aria-expanded',String(isHidden)); });
+      allTags.style.display='none';
+
+      addTagBtn.addEventListener('click',()=>{ const v=tagInput.value.trim(); if(v){ addTag(v); tagInput.value=''; } });
+      tagInput.addEventListener('keydown',(e)=>{ if(e.key==='Enter'){ e.preventDefault(); const v=tagInput.value.trim(); if(v){ addTag(v); tagInput.value=''; } }});
+      renderTagChips();
+    }
+    function addTag(t){ const tag=(t||'').trim(); if(!tag) return; if(tags.includes(tag)){ showToast('Tag already added'); return; } tags.push(tag); renderTagChips(); }
+    function removeTagAt(i){ tags.splice(i,1); renderTagChips(); }
+    function renderTagChips(){ tagChips.innerHTML=''; tags.forEach((t,i)=>{ const d=document.createElement('div'); d.className='tag-chip'; d.innerHTML=`<span>${escapeHtml(t)}</span><button class="remove" data-i="${i}" aria-label="Remove tag">✕</button>`; d.querySelector('button').onclick=()=>removeTagAt(i); tagChips.appendChild(d); }); if(tags.length===0) tagChips.innerHTML=`<div class="muted-sm">No tags — add tags above or click suggested tags</div>`; }
+
+    /* Add client CTA */
+    addClientBtn.addEventListener('click', ()=> {
+      const name = prompt('Enter client name (e.g. New Client Co.)');
+      if(!name) return;
+      const opt = document.createElement('option');
+      opt.value = name;
+      opt.textContent = name;
+      clientEl.appendChild(opt);
+      clientEl.value = name;
+      showToast('Client added');
+    });
+
+    /* File selection (via hidden inputs created on demand) */
+    sketchSelect.addEventListener('click', ()=> {
+      const inp = document.createElement('input'); inp.type='file'; inp.accept='.pdf';
+      inp.onchange = e => handleSketchFiles(e.target.files);
+      inp.click();
+    });
+    function handleSketchFiles(list){ if(!list || list.length===0) return; const f = list[0]; if(!f.name.toLowerCase().endsWith('.pdf')){ showError('Sketch must be a .pdf'); return; } selectedSketch = f; sketchInfo.textContent = `${f.name} • ${Math.round(f.size/1024)} KB`; }
+
+    cadSelect.addEventListener('click', ()=> {
+      const inp = document.createElement('input'); inp.type='file'; inp.accept='.dwg,.dxf';
+      inp.onchange = e => handleCadFiles(e.target.files);
+      inp.click();
+    });
+    function handleCadFiles(list){ if(!list || list.length===0) return; const f = list[0]; const lower = f.name.toLowerCase(); if(!(lower.endsWith('.dwg') || lower.endsWith('.dxf'))){ showError('CAD must be .dwg or .dxf'); return; } selectedCad = f; cadInfo.textContent = `${f.name} • ${Math.round(f.size/1024)} KB`; }
+
+    cadPdfSelect.addEventListener('click', ()=> {
+      const inp = document.createElement('input'); inp.type='file'; inp.accept='.pdf';
+      inp.onchange = e => handleCadPdfFiles(e.target.files);
+      inp.click();
+    });
+    function handleCadPdfFiles(list){ if(!list || list.length===0) return; const f = list[0]; if(!f.name.toLowerCase().endsWith('.pdf')){ showError('Final CAD PDF must be .pdf'); return; } selectedCadPdf = f; cadPdfInfo.textContent = `${f.name} • ${Math.round(f.size/1024)} KB`; }
+
+    function showError(msg){ errorBox.innerHTML = `<div style="padding:10px;background:rgba(255,45,85,0.06);color:#ffb3bf;border-radius:8px">${escapeHtml(msg)}</div>`; setTimeout(()=>{ if(errorBox) errorBox.innerHTML=''; },3500); }
+
+    /* Upload */
+    uploadBtn.addEventListener('click', ()=>{
+      const project = projectEl.value.trim();
+      const client = clientEl.value.trim();
+      const furniture = furnitureEl.value.trim();
+      const location = locationEl.value.trim();
+      const uploadedBy = uploadedByEl.value.trim();
+
+      if(!project){ showError('Project is required'); return; }
+      if(!client){ showError('Client is required'); return; }
+      if(!furniture){ showError('Furniture type is required'); return; }
+      if(!location){ showError('Location is required'); return; }
+      if(!uploadedBy){ showError('Uploaded By is required'); return; }
+      if(tags.length === 0){ showError('Add at least one tag'); return; }
+      if(!selectedSketch){ showError('Client final sketch (PDF) is required'); return; }
+      if(!selectedCad){ showError('Final CAD (.dwg/.dxf) is required'); return; }
+      if(!selectedCadPdf){ showError('Final CAD PDF export is required'); return; }
+
+      const form = new FormData();
+      form.append('project_name', project);
+      form.append('client_name', client);
+      form.append('furniture_type', furniture);
+      form.append('location', location);
+      form.append('uploaded_by', uploadedBy);
+      form.append('tags', JSON.stringify(tags));
+      form.append('files', selectedSketch, selectedSketch.name);
+      form.append('files', selectedCad, selectedCad.name);
+      form.append('files', selectedCadPdf, selectedCadPdf.name);
+      const roles = {};
+      roles[selectedSketch.name] = 'sketch';
+      roles[selectedCad.name] = 'cad';
+      roles[selectedCadPdf.name] = 'cad_pdf';
+      form.append('file_roles', JSON.stringify(roles));
+
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', API_BASE + '/upload');
+      xhr.upload.onprogress = e => {
+        if(e.lengthComputable){
+          progressWrap.style.display = 'block';
+          const pct = Math.round((e.loaded/e.total)*100);
+          progressBar.style.width = pct + '%';
+          statusEl.textContent = `Uploading ${pct}%`;
+        }
+      };
+      xhr.onload = () => {
+        progressBar.style.width = '100%';
+        setTimeout(()=> { progressWrap.style.display='none'; progressBar.style.width='0%'; }, 700);
+        let resp = {};
+        try { resp = JSON.parse(xhr.responseText || '{}'); } catch(e) { resp = {}; }
+        if(xhr.status >= 400 || !resp.ok){ showError('Upload error: ' + (resp.error || xhr.statusText)); return; }
+        statusEl.textContent = `Uploaded ${resp.count || 3} file(s)`;
+        // reset
+        tags = []; selectedSketch = null; selectedCad = null; selectedCadPdf = null;
+        renderTagChips(); sketchInfo.textContent = 'No PDF selected'; cadInfo.textContent = 'No CAD selected'; cadPdfInfo.textContent = 'No PDF selected';
+        projectEl.value=''; uploadedByEl.value='';
+        showToast('Upload successful');
+        loadFiles();
+      };
+      xhr.onerror = () => showError('Network error uploading files');
+      xhr.send(form);
+    });
+
+    /* View / Search & grouping by project_name */
+    searchBtn.addEventListener('click', loadFiles);
+    clearBtn.addEventListener('click', ()=> { queryInput.value=''; filterTag.value=''; filterFurniture.value=''; filterClient.innerHTML='<option value="">All clients</option>'; loadFiles(); });
+
+    async function loadFiles(){
+      const params = new URLSearchParams();
+      if(queryInput.value) params.append('q', queryInput.value.trim());
+      if(filterTag.value) params.append('tag', filterTag.value.trim());
+      if(filterFurniture.value) params.append('furniture', filterFurniture.value);
+      if(filterClient.value) params.append('client', filterClient.value);
+
+      fileList.innerHTML = '<div style="padding:12px;color:var(--muted)">Loading…</div>';
+      try{
+        const res = await fetch(API_BASE + '/files?' + params.toString());
+        if(!res.ok){ fileList.innerHTML = `<div style="padding:12px;color:#ff9b9b">Server returned ${res.status}</div>`; return; }
+        const data = await res.json();
+        renderFilesGroupedByProject(data || []);
+        populateClientFilter(data || []);
+      }catch(e){
+        fileList.innerHTML = `<div style="padding:12px;color:#ff9b9b">Network error</div>`;
+        console.error(e);
+      }
+    }
+
+    function populateClientFilter(data){
+      const clients = new Set();
+      (data||[]).forEach(a => { if(a.client_name) clients.add(a.client_name); });
+      let html = '<option value="">All clients</option>';
+      Array.from(clients).sort().forEach(c => html += `<option>${escapeHtml(c)}</option>`);
+      filterClient.innerHTML = html;
+    }
+
+    function renderFilesGroupedByProject(assets){
+      // Group assets by project_name - if empty fallback to '(untitled project)'
+      const groups = new Map();
+      assets.forEach(a => {
+        const project = (a.project_name || a.project || a.basename || '(untitled project)').trim();
+        if(!groups.has(project)) groups.set(project, []);
+        groups.get(project).push(a);
+      });
+
+      if(groups.size === 0){ fileList.innerHTML = '<div style="padding:12px;color:var(--muted)">No files found</div>'; return; }
+
+      // Build table header
+      let html = `<table><thead><tr>
+        <th>Project</th>
+        <th>Furniture type</th>
+        <th>Client</th>
+        <th>Tags</th>
+        <th>Client sketch (PDF)</th>
+        <th>Final CAD (DWG/DXF)</th>
+        <th>Final CAD (PDF export)</th>
+      </tr></thead><tbody>`;
+
+      // For each project group, pick fields and aggregate files by role
+      for(const [project, items] of groups.entries()){
+        // collect furniture_type, client_name, tags
+        let furniture = '';
+        let client = '';
+        const tagsSet = new Set();
+
+        // file slots
+        let sketchFile = null;
+        let cadFile = null;
+        let cadPdfFile = null;
+
+        items.forEach(a => {
+          if(!furniture) furniture = a.furniture_type || a.furniture || '';
+          if(!client) client = a.client_name || a.client || '';
+          // tags may be array or JSON string
+          let tagsArr = [];
+          if(Array.isArray(a.tags)) tagsArr = a.tags;
+          else if(a.tags_json) tagsArr = safeJson(a.tags_json);
+          else if(a.tags) {
+            try { tagsArr = typeof a.tags === 'string' ? JSON.parse(a.tags) : a.tags; } catch(e){ tagsArr = []; }
+          }
+          (tagsArr || []).forEach(t => { if(t) tagsSet.add(t); });
+
+          // gather files (if asset contains 'files' array)
+          const farr = Array.isArray(a.files) ? a.files : [];
+          farr.forEach(f => {
+            const role = (f.role || '').toLowerCase();
+            if(role === 'sketch' || (f.original_name && f.original_name.toLowerCase().endsWith('.pdf') && /sketch/i.test(f.role || ''))) {
+              sketchFile = sketchFile || f;
+            } else if(role === 'cad' || (f.original_name && (f.original_name.toLowerCase().endsWith('.dwg') || f.original_name.toLowerCase().endsWith('.dxf')))) {
+              cadFile = cadFile || f;
+            } else if(role === 'cad_pdf' || (f.original_name && f.original_name.toLowerCase().endsWith('.pdf') && /cad/i.test(f.role || ''))) {
+              cadPdfFile = cadPdfFile || f;
+            } else {
+              // If role is unknown, try to place by extension if slots empty
+              const name = (f.original_name || f.file_name || '').toLowerCase();
+              if(!sketchFile && name.endsWith('.pdf')) sketchFile = f;
+              else if(!cadFile && (name.endsWith('.dwg') || name.endsWith('.dxf'))) cadFile = f;
+              else if(!cadPdfFile && name.endsWith('.pdf')) cadPdfFile = cadPdfFile || f;
+            }
+          });
+        });
+
+        // render tags
+        const tagsHtml = Array.from(tagsSet).map(t => `<span class="tag-chip" data-tag="${escapeHtmlAttr(t)}">${escapeHtml(t)}</span>`).join(' ');
+
+        // helper to render file cell
+        const renderFileCell = (f) => {
+          if(!f) return `<div style="color: rgba(255,255,255,0.6);font-size:13px">-</div>`;
+          const dl = f.download_url ? `<a class="action-btn" href="${escapeHtmlAttr(f.download_url)}" target="_blank">Download</a>` : '';
+          const preview = (f.original_name && f.original_name.toLowerCase().endsWith('.pdf')) || (f.download_url && f.download_url.toLowerCase().endsWith('.pdf')) ? `<button class="action-btn" onclick="previewPdf('${escapeHtmlAttr(f.download_url||f.server_path||'')}')">Preview</button>` : '';
+          const copy = `<button class="action-btn" onclick="copyPath('${escapeJs((f.server_path||'').replace(/\\/g,'\\\\'))}')">Copy path</button>`;
+          const displayName = escapeHtml(f.original_name || f.file_name || '(file)');
+          return `<div style="display:flex;flex-direction:column;gap:6px"><div style="font-weight:600">${displayName}</div><div style="display:flex;gap:8px">${dl}${preview}${copy}</div></div>`;
+        };
+
+        html += `<tr>
+          <td style="font-weight:700">${escapeHtml(project)}</td>
+          <td>${escapeHtml(furniture || '')}</td>
+          <td>${escapeHtml(client || '')}</td>
+          <td>${tagsHtml || '<div style="color: rgba(255,255,255,0.6)">-</div>'}</td>
+          <td>${renderFileCell(sketchFile)}</td>
+          <td>${renderFileCell(cadFile)}</td>
+          <td>${renderFileCell(cadPdfFile)}</td>
+        </tr>`;
+      }
+
+      html += '</tbody></table>';
+      fileList.innerHTML = html;
+
+      // tag chip click filters
+      document.querySelectorAll('#fileList .tag-chip[data-tag]').forEach(el=>{
+        el.addEventListener('click', ()=> {
+          const tag = el.getAttribute('data-tag') || el.textContent.trim();
+          filterTag.value = tag;
+          loadFiles();
+        });
+      });
+    }
+
+    function previewPdf(url){ if(!url){ showError('Preview unavailable'); return; } window.open(url, '_blank', 'noopener'); }
+    function copyPath(p){ if(!p) return; navigator.clipboard.writeText(p).then(()=> showToast('Path copied')); }
+
+    function safeJson(s){ try{ return JSON.parse(s); }catch(e){ return []; } }
+    function escapeHtml(s){ if(s==null) return ''; return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
+    function escapeHtmlAttr(s){ return String(s || '').replaceAll('"','&quot;').replaceAll("'",'&#39;'); }
+    function escapeJs(s){ if(!s) return ''; return String(s).replaceAll('\\','\\\\').replaceAll('"','\\"').replaceAll('\'','\\\''); }
+
+    window.copyPath = copyPath;
+    window.previewPdf = previewPdf;
+
+    /* Cursor follower implementation */
+    (function(){
+      const dot = document.getElementById('cursorDot');
+      const ring = document.getElementById('cursorRing');
+      if(!dot || !ring) return;
+      let mouseX = window.innerWidth/2, mouseY = window.innerHeight/2;
+      let ringX = mouseX, ringY = mouseY;
+      document.addEventListener('mousemove', e => {
+        mouseX = e.clientX; mouseY = e.clientY;
+        dot.style.transform = `translate3d(${mouseX}px, ${mouseY}px, 0) translate(-50%, -50%)`;
+      });
+      function animate() {
+        ringX += (mouseX - ringX) * 0.16;
+        ringY += (mouseY - ringY) * 0.16;
+        ring.style.transform = `translate3d(${ringX}px, ${ringY}px, 0) translate(-50%, -50%)`;
+        requestAnimationFrame(animate);
+      }
+      animate();
+    })();
+  </script>
+</body>
+</html>
